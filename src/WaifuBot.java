@@ -28,22 +28,26 @@ public class WaifuBot extends ListenerAdapter {
 				return false;
 		}
 	};
+	
+	//String array used for random function
+	private static String[] waifuIndexes;
 
 	public static void main(String[] args) throws IllegalArgumentException, LoginException, RateLimitedException { 
+		//choose the picture folder, then get all directories from the folder
+		File waifusFolder = new File("./waifus");
+		File[] waifus = waifusFolder.listFiles(File::isDirectory);
 		
-			//choose the picture folder, then get all directories from the folder
-			File waifusFolder = new File("./waifus");
-			File[] waifus = waifusFolder.listFiles(File::isDirectory);
-			
-			//insert a directory with an array of all files inside it inside a hashmap
-			for (File waifu : waifus) 
-				waifuMap.put(waifu.getName(), waifu.listFiles(IMAGES));
-
-			//setup bot to listen
-			new JDABuilder(AccountType.BOT)
-				.setToken(args[0])
-				.addEventListener(new WaifuBot())
-				.buildAsync();
+		//insert a directory with an array of all files inside it inside a hashmap
+		for (File waifu : waifus) 
+			waifuMap.put(waifu.getName(), waifu.listFiles(IMAGES));
+		
+		waifuIndexes = waifuMap.keySet().toArray(new String[waifuMap.size()]);
+		
+		//setup bot to listen
+		new JDABuilder(AccountType.BOT)
+			.setToken(args[0])
+			.addEventListener(new WaifuBot())
+			.buildAsync();
 			
 	}
 	
@@ -55,9 +59,16 @@ public class WaifuBot extends ListenerAdapter {
 		String msg = event.getMessage().getContentDisplay();
 		if (!msg.startsWith("w!")) return;
 		
+		//remove the w! from the string
+		msg = msg.substring(2);
+		
 		//if a waifu exists after the prefix, send it
-		if (waifuMap.containsKey(msg.substring(2))) {
-			File[] waifus = waifuMap.get(msg.substring(2));
+		if (waifuMap.containsKey(msg)) {
+			File[] waifus = waifuMap.get(msg);
+			event.getChannel().sendFile(waifus[rng.nextInt(waifus.length)]).queue();
+		} else if (msg.equals("rand")) {
+			String theChosenOne = waifuIndexes[rng.nextInt(waifuIndexes.length)];
+			File[] waifus = waifuMap.get(theChosenOne);
 			event.getChannel().sendFile(waifus[rng.nextInt(waifus.length)]).queue();
 		}
 	}
