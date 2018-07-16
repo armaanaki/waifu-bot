@@ -1,11 +1,23 @@
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.HashMap;
+import java.util.Random;
 
-public class WaifuBot {
+import javax.security.auth.login.LoginException;
+
+import net.dv8tion.jda.core.AccountType;
+import net.dv8tion.jda.core.JDABuilder;
+import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
+import net.dv8tion.jda.core.exceptions.RateLimitedException;
+import net.dv8tion.jda.core.hooks.ListenerAdapter;
+
+public class WaifuBot extends ListenerAdapter {
 	
 	//hashmap to store directories and files inside it
 	private static HashMap<String, File[]> waifuMap = new HashMap<String, File[]>();
+	
+	//RNG for picture files
+	private static Random rng = new Random();
 	
 	//filter for images only
 	private final static FilenameFilter IMAGES = new FilenameFilter() {
@@ -17,15 +29,36 @@ public class WaifuBot {
 		}
 	};
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IllegalArgumentException, LoginException, RateLimitedException { 
+		
+			//choose the picture folder, then get all directories from the folder
 			File waifusFolder = new File("./waifus");
 			File[] waifus = waifusFolder.listFiles(File::isDirectory);
 			
+			//insert a directory with an array of all files inside it inside a hashmap
 			for (File waifu : waifus) 
 				waifuMap.put(waifu.getName(), waifu.listFiles(IMAGES));
-			
-			System.out.println(waifuMap.get("mio")[0]);
+
+			//setup bot to listen
+			new JDABuilder(AccountType.BOT)
+				.setToken(args[0])
+				.addEventListener(new WaifuBot())
+				.buildAsync();
 			
 	}
-
+	
+	public void onGuildMessageReceived(GuildMessageReceivedEvent event) {
+		//return if a bot sent the message
+		if (event.getAuthor().isBot()) return;
+		
+		//return if the message does not have the correct prefix
+		String msg = event.getMessage().getContentDisplay();
+		if (!msg.startsWith("w!")) return;
+		
+		//if a waifu exists after the prefix, send it
+		if (waifuMap.containsKey(msg.substring(2))) {
+			File[] waifus = waifuMap.get(msg.substring(2));
+			event.getChannel().sendFile(waifus[rng.nextInt(waifus.length)]).queue();
+		}
+	}
 }
