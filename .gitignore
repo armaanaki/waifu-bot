@@ -1,3 +1,9 @@
+#Unneeded Java Files
 .classpath
 .project
 .settings
+bin
+*.class
+
+#The Mac Special
+.DS_Store
