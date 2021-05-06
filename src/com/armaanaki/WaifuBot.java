@@ -16,13 +16,16 @@ import net.dv8tion.jda.api.JDA;
 
 public class WaifuBot extends ListenerAdapter {
 	
-	//hashmap to store directories and files inside it
+	// hashmap to store directories and files inside it
 	private static HashMap<String, File[]> waifuMap = new HashMap<String, File[]>();
+
+    // Store help message so it only has to be created once
+    private static String helpMessage;
 	
-	//RNG for picture files
+	// RNG for picture files
 	private static Random rng = new Random();
 	
-	//filter for images only
+	// filter for images only
 	private final static FilenameFilter IMAGES = new FilenameFilter() {
 		public boolean accept(File dir, String name) {
 				String[] extensions = {"gif", "png", "jpg", "bmp"};
@@ -46,6 +49,12 @@ public class WaifuBot extends ListenerAdapter {
 		
 		waifuIndexes = waifuMap.keySet().toArray(new String[waifuMap.size()]);
 		
+        // create the help message
+        helpMessage = "**waifu bot at your service**\n**Commands:**\n\t**w!help**: Print this help page.\n\t**w!rand**: Print a random waifu.";
+
+        for (String waifu : waifuMap.keySet())
+            helpMessage += "\n\t**w!" + waifu + "**";
+
 		//setup bot to listen
 	    JDA api = JDABuilder.createDefault(args[0])
 			.addEventListeners(new WaifuBot())
@@ -73,7 +82,7 @@ public class WaifuBot extends ListenerAdapter {
 			File[] waifus = waifuMap.get(theChosenOne);
 			event.getChannel().sendFile(waifus[rng.nextInt(waifus.length)]).queue();
 		} else if (msg.equals("help")) {
-            event.getAuthor().openPrivateChannel().flatMap(channel -> channel.sendMessage("Here are the available waifus: " + String.join(", ",waifuMap.keySet()))).queue();
+            event.getAuthor().openPrivateChannel().flatMap(channel -> channel.sendMessage(helpMessage)).queue();
         }
 	}
 }
