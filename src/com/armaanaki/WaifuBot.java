@@ -72,6 +72,8 @@ public class WaifuBot extends ListenerAdapter {
 			String theChosenOne = waifuIndexes[rng.nextInt(waifuIndexes.length)];
 			File[] waifus = waifuMap.get(theChosenOne);
 			event.getChannel().sendFile(waifus[rng.nextInt(waifus.length)]).queue();
-		}
+		} else if (msg.equals("help")) {
+            event.getAuthor().openPrivateChannel().flatMap(channel -> channel.sendMessage("Here are the available waifus: " + String.join(", ",waifuMap.keySet()))).queue();
+        }
 	}
 }
