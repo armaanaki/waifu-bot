@@ -3,6 +3,7 @@ package com.armaanaki;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Random;
 
 import javax.security.auth.login.LoginException;
@@ -35,23 +36,30 @@ public class WaifuBot extends ListenerAdapter {
 		}
 	};
 	
-	//String array used for random function
+	// String array used for random function
 	private static String[] waifuIndexes;
+
+    // HashMap to avoid repeating waifus on each iteration
+    private static HashMap<String, ArrayList<Integer>> repeatCounter = new HashMap<String, ArrayList<Integer>>();
+
+    // max number of different images before a repeat can occur
+    private static final int repeatCounterSize = 2;
 
 	public static void main(String[] args) throws IllegalArgumentException, LoginException, RateLimitedException { 
 		//choose the picture folder, then get all directories from the folder
 		File waifusFolder = new File("./waifus");
 		File[] waifus = waifusFolder.listFiles(File::isDirectory);
 		
-		//insert a directory with an array of all files inside it inside a hashmap
-		for (File waifu : waifus) 
+		//insert a directory with an array of all files inside it inside a hashmap and initialize repeatCounter
+		for (File waifu : waifus) { 
 			waifuMap.put(waifu.getName(), waifu.listFiles(IMAGES));
+            repeatCounter.put(waifu.getName(), new ArrayList<Integer>());
+        }
 		
 		waifuIndexes = waifuMap.keySet().toArray(new String[waifuMap.size()]);
 		
         // create the help message
         helpMessage = "**waifu bot at your service**\n**Commands:**\n\t**w!help**: Print this help page.\n\t**w!rand**: Print a random waifu.";
-
         for (String waifu : waifuMap.keySet())
             helpMessage += "\n\t**w!" + waifu + "**";
 
@@ -75,14 +83,30 @@ public class WaifuBot extends ListenerAdapter {
 		
 		//if a waifu exists after the prefix, send it
 		if (waifuMap.containsKey(msg)) {
-			File[] waifus = waifuMap.get(msg);
-			event.getChannel().sendFile(waifus[rng.nextInt(waifus.length)]).queue();
+            sendWaifu(event, msg);
 		} else if (msg.equals("rand")) {
 			String theChosenOne = waifuIndexes[rng.nextInt(waifuIndexes.length)];
-			File[] waifus = waifuMap.get(theChosenOne);
-			event.getChannel().sendFile(waifus[rng.nextInt(waifus.length)]).queue();
+            sendWaifu(event, theChosenOne);
 		} else if (msg.equals("help")) {
             event.getAuthor().openPrivateChannel().flatMap(channel -> channel.sendMessage(helpMessage)).queue();
         }
 	}
+
+    // method to send images
+    private static void sendWaifu(GuildMessageReceivedEvent event, String waifu) {
+        File[] waifus = waifuMap.get(waifu);
+        File waifuToSend;
+
+        // loop until a not previously selected image is chosen
+        while (true) {
+            int random = rng.nextInt(waifus.length);
+            ArrayList<Integer> repeats = repeatCounter.get(waifu); 
+            if (repeats.contains(random)) continue; 
+            waifuToSend = waifus[random];
+            repeats.add(random);
+            if (repeats.size() > repeatCounterSize) repeats.remove(0); 
+            break; 
+        }
+        event.getChannel().sendFile(waifuToSend).queue();
+    }
 }
