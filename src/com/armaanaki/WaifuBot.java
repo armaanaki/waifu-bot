@@ -33,7 +33,7 @@ public class WaifuBot extends ListenerAdapter {
   // filter for images only
   private final static FilenameFilter IMAGES = new FilenameFilter() {
     public boolean accept(File dir, String name) {
-      String[] extensions = {"gif", "png", "jpg", "bmp"};
+      String[] extensions = {"gif", "png", "jpg", "bmp", "mov", "mp4"};
       for (String ext : extensions) 
         if (name.endsWith(ext)) { return true; }
       return false;
@@ -90,6 +90,7 @@ public class WaifuBot extends ListenerAdapter {
   private static void refreshWaifuList() {
     //clear hashmap
     waifuMap.clear();
+    repeatCounter.clear();
 
     //choose the picture folder, then get all directories from the folder
     File waifusFolder = new File("./waifus");
@@ -160,7 +161,7 @@ public class WaifuBot extends ListenerAdapter {
     while (true) {
       int random = rng.nextInt(waifus.length);
       ArrayList<Integer> repeats = repeatCounter.get(waifu); 
-      if (repeats.contains(random)) continue; 
+      if (repeats.contains(random) && waifus.length > repeatCounterSize) continue; 
       waifuToSend = waifus[random];
       repeats.add(random);
       if (repeats.size() > repeatCounterSize) repeats.remove(0); 
